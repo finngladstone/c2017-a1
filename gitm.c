@@ -8,45 +8,99 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #define BUFFER 100
 #define ARG0_BUFFER 8 // max command length = 7, + null byte
-#define NUMBER_OF_NOPARAMS 4
+#define NUMBER_OF_NOPARAMS 5
 #define BUFFER_SIZE 100
+#define BOARD_SIZE 19
+#define HISTORY_SIZE 100
 
+char board[BOARD_SIZE][BOARD_SIZE];
+int x_mist;
+int y_mist;
 
+int x_stone;
+int y_stone;
 
-void who() {
-    printf("Hello world\n");
+char player;
+char historystr[HISTORY_SIZE];
+
+void switch_player() 
+{
+    if (player == 'B')
+        player = 'W';
+    else
+        player = 'B';
 }
 
-void term() {}
+void who() 
+{
+    printf("%d\n", player);
+}
 
-void resign() {}
+void history() 
+{
+    printf("%s\n", historystr);
+}
 
-void view() {}
+void term() 
+{
+    exit(1);
+}
 
-void place(int c, int r) {}
+void resign() 
+{
+    history();
+    exit(0);
+}
 
-void history(int c, int r) {}
-
-// https://stackoverflow.com/questions/252748/how-can-i-use-an-array-of-function-pointers
-void (*no_param_ptr[NUMBER_OF_NOPARAMS])() = {who, term, resign, view};
-
-
-/* 
-    history --> hashmap? location : char array
-    process line of input + recognise commands 
-    incorrect command?
-*/
-
-void stdout_the_board() 
+void view() 
 {
     ;
 }
 
-int main() // main will only read stdin and pass to other fns
+void place(char * input) {
+    int x;
+    int y;
+
+    if (!isalpha(input[6]) || !isupper(input[6]))
+    {
+        printf("Invalid coordinate\n");
+        return;
+    }
+
+    // add to history string
+        
+    // switch_player();
+    
+} // need to clean input
+
+
+
+// https://stackoverflow.com/questions/252748/how-can-i-use-an-array-of-function-pointers
+void (*no_param_ptr[NUMBER_OF_NOPARAMS])() = {who, term, resign, view, history};
+
+void stdout_the_board() {}
+
+void update_mist() {}
+
+int main()
 {
+
+    /* Setup board + function calls*/
+
+    player = 'B';
+
+    for (int i = 0; i < 19; i++) 
+    {
+        for (int j = 0; j < 19; j++) 
+        {
+            board[i][j] = '.';
+        }
+    }
 
     char no_param_calls[NUMBER_OF_NOPARAMS][ARG0_BUFFER];
 
@@ -54,26 +108,38 @@ int main() // main will only read stdin and pass to other fns
     strcpy(no_param_calls[1], "term\0");
     strcpy(no_param_calls[2], "resign\0");
     strcpy(no_param_calls[3], "view\0");
+    strcpy(no_param_calls[4], "history\0");
 
     /* Program logic loop */
 
     int c;
+    int success;
     char buffer[BUFFER_SIZE];
 
     while (fgets(buffer, BUFFER_SIZE, stdin)) 
     {
         buffer[strcspn(buffer, "\n")] = 0;
+        success = 0;
+
 
         for (int i = 0; i < NUMBER_OF_NOPARAMS; i++)
         {
             if (strcmp(buffer, no_param_calls[i]) == 0) 
             {
                 (*no_param_ptr[i])();
+                success = 1;
                 break;
             }      
+        } 
+
+        if (success == 0)
+        {
+            if (strncmp(buffer, "place ", 6) == 0 && strlen(buffer) == 9)
+                place(buffer);
+            else
+                printf("Invalid!\n");
         }
 
-        ;
     }
     
     // term();
