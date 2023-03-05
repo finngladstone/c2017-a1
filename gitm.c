@@ -2,25 +2,36 @@
 // unikey: fgla0414
 // SID: 510 448 570
 
+/*
+    Will interpret EOF as term + exit with code 1
+*/
+
 #include <stdio.h>
 #include <string.h>
 
 #define BUFFER 100
 #define ARG0_BUFFER 8 // max command length = 7, + null byte
-
-void who();
-
-void term();
-
-void resign();
-
-void view();
-
-void place(int c, int r);
-
-void history(int c, int r);
+#define NUMBER_OF_NOPARAMS 4
+#define BUFFER_SIZE 100
 
 
+
+void who() {
+    printf("Hello world\n");
+}
+
+void term() {}
+
+void resign() {}
+
+void view() {}
+
+void place(int c, int r) {}
+
+void history(int c, int r) {}
+
+// https://stackoverflow.com/questions/252748/how-can-i-use-an-array-of-function-pointers
+void (*no_param_ptr[NUMBER_OF_NOPARAMS])() = {who, term, resign, view};
 
 
 /* 
@@ -29,42 +40,43 @@ void history(int c, int r);
     incorrect command?
 */
 
-
-void route_commands(char * command)
-{  
-    
-    // clean commands
-    char first_arg[ARG0_BUFFER];
-
-    int i = 0;
-    while (*command != ' ') {
-        
-        if (i == ARG0_BUFFER) {
-            printf("Error: Invalid command\n");
-            return;
-        }
-
-        command++;
-
-    }
-
+void stdout_the_board() 
+{
+    ;
 }
 
 int main() // main will only read stdin and pass to other fns
 {
-    // char str1[] = "hello";
-    // // char str2[] = "hello";
-    // char str2[8];
-    // str2[0] = 'h';
-    // str2[1] = 'e';
-    // str2[2] = 'l';
-    // str2[3] = 'l';
-    // str2[4] = 'o';
-    // str2[5] = '\0';
 
-    // int result = strcmp(str1, str2);
-    // printf("result = %d\n", result);
-    // printf("length = %ld\n", strlen(str2));
+    char no_param_calls[NUMBER_OF_NOPARAMS][ARG0_BUFFER];
+
+    strcpy(no_param_calls[0], "who\0");
+    strcpy(no_param_calls[1], "term\0");
+    strcpy(no_param_calls[2], "resign\0");
+    strcpy(no_param_calls[3], "view\0");
+
+    /* Program logic loop */
+
+    int c;
+    char buffer[BUFFER_SIZE];
+
+    while (fgets(buffer, BUFFER_SIZE, stdin)) 
+    {
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        for (int i = 0; i < NUMBER_OF_NOPARAMS; i++)
+        {
+            if (strcmp(buffer, no_param_calls[i]) == 0) 
+            {
+                (*no_param_ptr[i])();
+                break;
+            }      
+        }
+
+        ;
+    }
+    
+    // term();
 
     return 0;
 } 
