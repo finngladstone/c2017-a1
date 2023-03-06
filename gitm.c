@@ -28,6 +28,16 @@ int y_stone;
 char player;
 char historystr[HISTORY_SIZE];
 
+int check_same_tile() 
+{
+
+}
+
+void check_win_condition()
+{
+
+}
+
 void switch_player() 
 {
     if (player == 'B')
@@ -52,7 +62,12 @@ void term()
 }
 
 void resign() 
-{
+{   
+    if (player == 'B')
+        printf("White wins!\n");
+    else   
+        printf("Black wins!\n");
+
     history();
     exit(0);
 }
@@ -62,7 +77,8 @@ void view()
     ;
 }
 
-void place(char * input) {
+void place(char * input) 
+{
     int x;
     int y;
 
@@ -71,6 +87,32 @@ void place(char * input) {
         printf("Invalid coordinate\n");
         return;
     }
+
+    x = input[6] - 'A';
+    if (!(x >= 0 || x<=18))
+    {
+        printf("Invalid coordinate\n");
+        return;
+    }
+
+    if (input[8] == '\0') // 2 digit coord
+    {
+        
+    }
+    else // 3 digit coord
+    {
+
+    }
+
+    if (board[x][y] == '.')
+        ;
+    else 
+    {
+        printf("\n");
+    }
+        
+
+    
 
     // add to history string
         
@@ -133,8 +175,9 @@ int main()
         } 
 
         if (success == 0)
-        {
-            if (strncmp(buffer, "place ", 6) == 0 && strlen(buffer) == 9)
+        {   // needs support for 2 digit coords
+            if (strncmp(buffer, "place ", 6) == 0 && 
+                (strlen(buffer) == 9 || strlen(buffer) == 8)) 
                 place(buffer);
             else
                 printf("Invalid!\n");
