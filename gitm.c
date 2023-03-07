@@ -28,6 +28,15 @@ int y_stone;
 char player;
 char historystr[HISTORY_SIZE];
 
+int check_coord(int a)
+{
+    if (a >= 1 && a <= 19)
+        return 1;
+
+    printf("Invalid coordinate\n");
+    return 0;
+}
+
 int check_same_tile() 
 {
 
@@ -48,7 +57,7 @@ void switch_player()
 
 void who() 
 {
-    printf("%d\n", player);
+    printf("%c\n", player);
 }
 
 void history() 
@@ -88,27 +97,31 @@ void place(char * input)
         return;
     }
 
-    x = input[6] - 'A';
-    if (!(x >= 0 || x<=18))
+    if (input[8] == ' ' || input[9] == ' ') // command = [place][coord][whitespace]
     {
-        printf("Invalid coordinate\n");
+        printf("Invalid!\n");
         return;
     }
 
-    if (input[8] == '\0') // 2 digit coord
-    {
-        
-    }
-    else // 3 digit coord
-    {
 
-    }
+    x = input[6] - 'A';
 
-    if (board[x][y] == '.')
+    if (!check_coord(x + 1)) // we read in A as 0, therefore offset for check!
+        return;
+
+    if (strlen(input) == 8) 
+        y = input[7] - '0'; 
+    else 
+        y = ((input[7] - '0') * 10) + (input[8] - '0');
+
+    if (!check_coord(y))
+        return;
+
+    if (board[x][y-1] == '.')
         ;
     else 
     {
-        printf("\n");
+        ;
     }
         
 
@@ -175,10 +188,14 @@ int main()
         } 
 
         if (success == 0)
-        {   // needs support for 2 digit coords
-            if (strncmp(buffer, "place ", 6) == 0 && 
-                (strlen(buffer) == 9 || strlen(buffer) == 8)) 
-                place(buffer);
+        {   
+            if (strncmp(buffer, "place ", 6) == 0)
+            {
+                if (strlen(buffer) == 9 || strlen(buffer) == 8)
+                    place(buffer);
+                else 
+                    printf("Invalid coordinate\n");
+            }
             else
                 printf("Invalid!\n");
         }
