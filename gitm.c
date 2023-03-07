@@ -59,16 +59,12 @@ int main()
     }
 
     // Setup regex
-    regex_t re;
-    int value; 
+    regex_t check_syntax;
+    regex_t check_validity;
+
     //https://regex101.com/r/rO0yE6/1
-    value = regcomp(&re, "^place [A-S]([1-9]|1[0-9]|20)$", REG_EXTENDED);
-
-    if (value != 0)
-        printf("Fucked\n");
-
-
-
+    regcomp(&check_syntax, "^place ([a-z]|[A-Z])[0-9]+$", REG_EXTENDED);
+    regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9]|20)$", REG_EXTENDED);
 
     int c;
     char buffer[BUFFER_SIZE];
@@ -101,19 +97,18 @@ int main()
         // Preprocessing for place()
         else if (strncmp(buffer, "place ", 6) == 0) { 
             
-            if (regexec(&re, buffer, 0, NULL, 0) == 1)
+            if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
                 printf("Invalid!\n");
-            else {
+                continue;
+            }
+                
+            if (regexec(&check_validity, buffer, 0, NULL, 0) == 0) {
                 int x; 
                 int y;
-
-
-            }
-
-
-
-            // if (check_win_condition)
-            //     break;
+            } 
+            else 
+                printf("Invalid coordinate\n");
+    
         } 
         
         else {
