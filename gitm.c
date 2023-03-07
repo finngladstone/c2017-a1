@@ -39,7 +39,7 @@ void history(char * h) {
 
 void view() {}
 
-void place(char * input) {}
+int place(char * input) {}
 
 /* Main */
 
@@ -62,7 +62,7 @@ int main()
     regex_t re;
     int value; 
     //https://regex101.com/r/rO0yE6/1
-    value = regcomp(&re, "^place [A-S]([1-9]|1[0-9]|20)$", 0);
+    value = regcomp(&re, "^place [A-S]([1-9]|1[0-9]|20)$", REG_EXTENDED);
 
     if (value != 0)
         printf("Fucked\n");
@@ -98,11 +98,19 @@ int main()
             view();
         } 
         
-        else if (strncmp(buffer, "place ", 6) == 0) {
+        // Preprocessing for place()
+        else if (strncmp(buffer, "place ", 6) == 0) { 
             
-            int x = regexec(&re, "place A14", 0, NULL, 0);
+            if (regexec(&re, buffer, 0, NULL, 0) == 1)
+                printf("Invalid!\n");
+            else {
+                int x; 
+                int y;
 
-            printf("%d\n", x);
+
+            }
+
+
 
             // if (check_win_condition)
             //     break;
