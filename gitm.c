@@ -29,17 +29,12 @@ void update_mist(int x, int y) {}
 
 /* Player commands */
 
-void who(char ch) {
-    printf("%c\n", ch);
-}
 
 void history(char * h) {
     printf("%s\n", h);
 }
 
 void view() {}
-
-int place(char * input) {}
 
 /* Main */
 
@@ -63,8 +58,8 @@ int main()
     regex_t check_validity;
 
     //https://regex101.com/r/rO0yE6/1
-    regcomp(&check_syntax, "^place ([a-z]|[A-Z])[0-9]+$", REG_EXTENDED);
-    regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9]|20)$", REG_EXTENDED);
+    regcomp(&check_syntax, "^place ([a-z]|[A-Z]|[0-9])+$", REG_EXTENDED);
+    regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9])$", REG_EXTENDED);
 
     int c;
     char buffer[BUFFER_SIZE];
@@ -75,7 +70,7 @@ int main()
         buffer[strcspn(buffer, "\n")] = 0; 
         
         if (strcmp(buffer, "who") == 0) {
-            who(player);
+            printf("%c\n", player);
 
         } else if (strcmp(buffer, "term") == 0) {
             exit(1);  
@@ -103,8 +98,21 @@ int main()
             }
                 
             if (regexec(&check_validity, buffer, 0, NULL, 0) == 0) {
+                
                 int x; 
                 int y;
+
+                x = buffer[6] - 'A';
+
+                if (strlen(buffer) == 8) 
+                    y = buffer[7] - '0'; 
+                else 
+                    y = ((buffer[7] - '0') * 10) + (buffer[8] - '0') - 1;
+
+                // Flip input as x, y in 2d array addressed as arr[y][x]
+
+                
+
             } 
             else 
                 printf("Invalid coordinate\n");
