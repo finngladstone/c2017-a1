@@ -15,35 +15,78 @@
 
 /* Helper commands */
 
-void update_history(char * input) {}
+int raise(int x, int power) {
+    int reval = 1;  
+    for (int i = 1; i <= power; i++)
+        reval *= x;
 
-int check_win_condition(char * board) {
-//     int reval;
-//     printf("%c wins!\n", "finn");
-
-//     return reval;
+    return reval;
 }
 
-void update_mist(int x, int y) {}
+int within_range(int a) {
+    if (a >= 0 && a <= 18)
+        return 1;
 
-
-/* Player commands */
-
-
-void history(char * h) {
-    printf("%s\n", h);
+    return 0;
 }
 
-void view() {}
+int check_next_position(char board[BOARD_SIZE][BOARD_SIZE], int x, int y, int xmod, int ymod) {
+
+    if (!(within_range(x + xmod) && within_range(y + ymod)))
+        return 0;
+
+    char ch = board[y][x];
+
+    if (board[y+ymod][x+xmod] != ch)
+        return 0;
+    else 
+        return 1 + check_next_position(board, x+xmod, y+ymod, xmod, ymod);
+
+}
+
+int check_win_condition(char board[BOARD_SIZE][BOARD_SIZE], int x, int y) {
+    int count = 0;
+    char ch = board[y][x];
+    int temp = 0;
+
+    for (int i = x - 1; i < x + 2; i++) {
+        for (int j = y - 1; j < y + 2; j++) {
+            if ((i == x) && (j == y))
+                continue;
+
+            if (within_range(i) && within_range(j))
+                ;
+            else 
+                continue;
+            
+            if (board[j][i] == ch) {
+                temp = 1 + check_next_position(board, x, y, x - i, y - j) + check_next_position(board, x, y, (x - i)*-1, (y - j)*-1);
+            }
+
+            if (temp > count)
+                count = temp;
+        }
+    }
+
+    if (count >= 5)
+        return 1;
+    return 0;
+}
 
 /* Main */
 
 int main()
 {
+
     //Setup variables
-    char history[MAX_HISTORY];
+    char history[MAX_HISTORY] = "";
     char player = 'B';
     char board[BOARD_SIZE][BOARD_SIZE];
+
+    int history_pointer = 0;
+
+    int mist_x = 9;
+    int mist_y = 9;
 
     //Setup the game board
     
@@ -58,10 +101,8 @@ int main()
     regex_t check_validity;
 
     //https://regex101.com/r/rO0yE6/1
-    regcomp(&check_syntax, "^place ([a-z]|[A-Z]|[0-9])+$", REG_EXTENDED);
-    regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9])$", REG_EXTENDED);
 
-    int c;
+
     char buffer[BUFFER_SIZE];
 
     while(fgets(buffer, BUFFER_SIZE, stdin)) {
@@ -84,39 +125,97 @@ int main()
 
             break;
         } 
+
+        else if (strcmp(buffer, "history") == 0) {
+            printf("%s\n", history);
+        }
         
         else if (strcmp(buffer, "view") == 0) {
-            view();
+            printf("%c%i,", mist_x + 'A', 19 - mist_y);
+
+            printf("\n");
         } 
         
         // Preprocessing for place()
         else if (strncmp(buffer, "place ", 6) == 0) { 
+
+            regcomp(&check_syntax, "^place ([a-z]|[A-Z]|[0-9])+$", REG_EXTENDED);
             
             if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
                 printf("Invalid!\n");
+                regfree(&check_syntax);
                 continue;
             }
+
+            regfree(&check_syntax);
+            regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9])$", REG_EXTENDED);
                 
             if (regexec(&check_validity, buffer, 0, NULL, 0) == 0) {
+
+                regfree(&check_validity);
                 
                 int x; 
                 int y;
+                char stone;
+                int len;
 
                 x = buffer[6] - 'A';
 
-                if (strlen(buffer) == 8) 
+                if (strlen(buffer) == 8) {
                     y = buffer[7] - '0'; 
-                else 
-                    y = ((buffer[7] - '0') * 10) + (buffer[8] - '0') - 1;
+                    len = 2;
+                } else {
+                    y = ((buffer[7] - '0') * 10) + (buffer[8] - '0');
+                    len = 3;
+                }
+
+                if (player == 'B')
+                    stone = '#';
+                else
+                    stone = 'o';
 
                 // Flip input as x, y in 2d array addressed as arr[y][x]
                 // x/y coords preserved for history - remember to output as char/1-indexed int
 
-                
+                if (board[19 - y][x] == '.') {
+                    board[19 - y][x] = stone;
+                    
+                    //Update history
+                    int i;
+                    for (i = 0; i < len; i++)
+                        history[history_pointer + i] = buffer[i+6];
 
+                    history_pointer += i;
+
+                    //Check win condition
+                    if (check_win_condition(board, x, 19-y)) {
+                        if (player == 'B')
+                            printf("Black wins!\n");
+                        else   
+                            printf("White wins!\n");
+
+                        break;
+                    }
+
+                    // Update mist
+                    mist_x = (5 * raise(x+1, 2) + 3 * (x+1) + 4) % 19;
+                    mist_y = 19 - (1 + (4 * raise(y, 2) + 2 * y - 4) % 19);
+
+
+                    // Switch player
+                    if (player == 'B')
+                        player = 'W';
+                    else
+                        player = 'B';
+                }
+                else 
+                    printf("Occupied coordinate\n");
             } 
-            else 
+            else {
                 printf("Invalid coordinate\n");
+                regfree(&check_validity);
+            }
+
     
         } 
         
