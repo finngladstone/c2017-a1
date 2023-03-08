@@ -10,7 +10,7 @@
 
 #define BUFFER_SIZE 128
 #define BOARD_SIZE 19
-#define MAX_HISTORY 1200
+#define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
 
 /* Helper commands */
@@ -110,6 +110,7 @@ int main()
                     y = ((buffer[7] - '0') * 10) + (buffer[8] - '0') - 1;
 
                 // Flip input as x, y in 2d array addressed as arr[y][x]
+                // x/y coords preserved for history - remember to output as char/1-indexed int
 
                 
 
