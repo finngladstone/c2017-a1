@@ -133,6 +133,15 @@ int main()
         else if (strcmp(buffer, "view") == 0) {
             printf("%c%i,", mist_x + 'A', 19 - mist_y);
 
+            for (int i = mist_y - 3; i <= mist_y + 3; i++) {
+                for (int j = mist_x - 3; j <= mist_x + 3; j++) {
+                    if (within_range(i) && within_range(j))
+                        printf("%c", board[i][j]);
+                    else 
+                        printf("x");
+                }
+            }
+
             printf("\n");
         } 
         
