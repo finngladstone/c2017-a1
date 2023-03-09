@@ -2,207 +2,247 @@
 // unikey: fgla0414
 // SID: 510 448 570
 
-/*
-    Will interpret EOF as term + exit with code 1
-*/
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <regex.h>
 
-#define BUFFER 100
-#define ARG0_BUFFER 8 // max command length = 7, + null byte
-#define NUMBER_OF_NOPARAMS 5
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 256
 #define BOARD_SIZE 19
-#define HISTORY_SIZE 100
+#define MAX_HISTORY 1084
+#define NO_PARAM_ARGS 5
 
-char board[BOARD_SIZE][BOARD_SIZE];
-int x_mist;
-int y_mist;
+#define CHECK_SYNTAX "^place ([a-z]|[A-Z]|[0-9])+$"
+#define CHECK_VALIDITY "^place [A-S]([1-9]|1[0-9])$"
 
-int x_stone;
-int y_stone;
+/* Helper commands */
 
-char player;
-char historystr[HISTORY_SIZE];
+int raise(int x, int power) {
+    int reval = 1;  
+    for (int i = 1; i <= power; i++)
+        reval *= x;
 
-int check_coord(int a)
-{
-    if (a >= 1 && a <= 19)
+    return reval;
+}
+
+int within_range(int a) {
+    if (a >= 0 && a <= 18)
         return 1;
 
-    printf("Invalid coordinate\n");
     return 0;
 }
 
-int check_same_tile() 
-{
+/* Functions for checking win condition*/
 
-}
+int check_next_position(char board[BOARD_SIZE][BOARD_SIZE], int x, int y, int xmod, int ymod) {
 
-void check_win_condition()
-{
+    if (!(within_range(x + xmod) && within_range(y + ymod)))
+        return 0;
 
-}
+    char ch = board[y][x];
 
-void switch_player() 
-{
-    if (player == 'B')
-        player = 'W';
-    else
-        player = 'B';
-}
-
-void who() 
-{
-    printf("%c\n", player);
-}
-
-void history() 
-{
-    printf("%s\n", historystr);
-}
-
-void term() 
-{
-    exit(1);
-}
-
-void resign() 
-{   
-    if (player == 'B')
-        printf("White wins!\n");
-    else   
-        printf("Black wins!\n");
-
-    history();
-    exit(0);
-}
-
-void view() 
-{
-    ;
-}
-
-void place(char * input) 
-{
-    int x;
-    int y;
-
-    if (!isalpha(input[6]) || !isupper(input[6]))
-    {
-        printf("Invalid coordinate\n");
-        return;
-    }
-
-    if (input[8] == ' ' || input[9] == ' ') // command = [place][coord][whitespace]
-    {
-        printf("Invalid!\n");
-        return;
-    }
-
-
-    x = input[6] - 'A';
-
-    if (!check_coord(x + 1)) // we read in A as 0, therefore offset for check!
-        return;
-
-    if (strlen(input) == 8) 
-        y = input[7] - '0'; 
+    if (board[y+ymod][x+xmod] != ch)
+        return 0;
     else 
-        y = ((input[7] - '0') * 10) + (input[8] - '0');
+        return 1 + check_next_position(board, x+xmod, y+ymod, xmod, ymod);
 
-    if (!check_coord(y))
-        return;
+}
 
-    if (board[x][y-1] == '.')
-        ;
-    else 
-    {
-        ;
+int check_win_condition(char board[BOARD_SIZE][BOARD_SIZE], int x, int y) {
+    int count = 0;
+    char ch = board[y][x];
+    int temp = 0;
+
+    for (int i = x - 1; i < x + 2; i++) {
+        for (int j = y - 1; j < y + 2; j++) {
+            if ((i == x) && (j == y))
+                continue;
+
+            if (within_range(i) && within_range(j))
+                ;
+            else 
+                continue;
+            
+            if (board[j][i] == ch) {
+                temp = 1 + check_next_position(board, x, y, x - i, y - j) + check_next_position(board, x, y, (x - i)*-1, (y - j)*-1);
+            }
+
+            if (temp > count)
+                count = temp;
+        }
     }
-        
 
-    
+    if (count >= 5)
+        return 1;
+    return 0;
+}
 
-    // add to history string
-        
-    // switch_player();
-    
-} // need to clean input
-
-
-
-// https://stackoverflow.com/questions/252748/how-can-i-use-an-array-of-function-pointers
-void (*no_param_ptr[NUMBER_OF_NOPARAMS])() = {who, term, resign, view, history};
-
-void stdout_the_board() {}
-
-void update_mist() {}
+/* Main */
 
 int main()
 {
 
-    /* Setup board + function calls*/
+    //Setup variables
+    char history[MAX_HISTORY] = "";
+    char player = 'B';
+    char board[BOARD_SIZE][BOARD_SIZE];
 
-    player = 'B';
+    int history_pointer = 0;
 
-    for (int i = 0; i < 19; i++) 
-    {
-        for (int j = 0; j < 19; j++) 
-        {
+    int mist_x = 9;
+    int mist_y = 9;
+
+    //Setup the game board
+    
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
             board[i][j] = '.';
         }
     }
 
-    char no_param_calls[NUMBER_OF_NOPARAMS][ARG0_BUFFER];
+    // Setup regex for parsing place args later
 
-    strcpy(no_param_calls[0], "who\0");
-    strcpy(no_param_calls[1], "term\0");
-    strcpy(no_param_calls[2], "resign\0");
-    strcpy(no_param_calls[3], "view\0");
-    strcpy(no_param_calls[4], "history\0");
+    regex_t check_syntax;
+    regex_t check_validity;
 
-    /* Program logic loop */
-
-    int c;
-    int success;
     char buffer[BUFFER_SIZE];
 
-    while (fgets(buffer, BUFFER_SIZE, stdin)) 
-    {
-        buffer[strcspn(buffer, "\n")] = 0;
-        success = 0;
+    while(fgets(buffer, BUFFER_SIZE, stdin)) {
+        
+        //remove newline
+        buffer[strcspn(buffer, "\n")] = 0; 
+        
+        if (strcmp(buffer, "who") == 0) {
+            printf("%c\n", player);
 
+        } else if (strcmp(buffer, "term") == 0) {
+            exit(1);  
+        } 
+        
+        else if (strcmp(buffer, "resign") == 0) {
+            if (player == 'B')
+                printf("White wins!\n");
+            else
+                printf("Black wins!\n");
 
-        for (int i = 0; i < NUMBER_OF_NOPARAMS; i++)
-        {
-            if (strcmp(buffer, no_param_calls[i]) == 0) 
-            {
-                (*no_param_ptr[i])();
-                success = 1;
-                break;
-            }      
+            break;
         } 
 
-        if (success == 0)
-        {   
-            if (strncmp(buffer, "place ", 6) == 0)
-            {
-                if (strlen(buffer) == 9 || strlen(buffer) == 8)
-                    place(buffer);
-                else 
-                    printf("Invalid coordinate\n");
-            }
-            else
-                printf("Invalid!\n");
+        else if (strcmp(buffer, "history") == 0) {
+            printf("%s\n", history);
         }
+        
+        else if (strcmp(buffer, "view") == 0) {
+            // Output centre of mist coord in 1-indexed
+            printf("%c%i,", mist_x + 'A', 19 - mist_y); 
 
-    }
+            // Display concat string of positions in mist
+            for (int i = mist_y - 3; i <= mist_y + 3; i++) {
+                for (int j = mist_x - 3; j <= mist_x + 3; j++) {
+                    if (within_range(i) && within_range(j))
+                        printf("%c", board[i][j]);
+                    else 
+                        printf("x");
+                }
+            }
+
+            printf("\n");
+        } 
+        
+        else if (strncmp(buffer, "place ", 6) == 0) { 
+        
+            // Will confirm command is within 'place [coord]' syntax and nothing else
+            regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
+            
+            if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
+                printf("Invalid!\n");
+                regfree(&check_syntax); // Will regfree asap in both outcomes
+                continue;
+            }
+
+            regfree(&check_syntax); // See above about regfree
+
+            // Will check that coordinate is valid!
+            regcomp(&check_validity, CHECK_VALIDITY, REG_EXTENDED);
+                
+            if (regexec(&check_validity, buffer, 0, NULL, 0) == 1) {
+                printf("Invalid coordinate\n");
+                regfree(&check_validity); // Already freed above if it succeeds
+                continue;
+            }
+
+            regfree(&check_validity);
+                
+            int x; 
+            int y;
+            char stone;
+            int len;
+
+            // Obtain x: we know that the x coord is always at index 6
+            x = buffer[6] - 'A'; 
+        
+            // Check if we have a 1 or 2 digit y coord and account for such
+            if (strlen(buffer) == 8) {
+                y = buffer[7] - '0'; 
+                len = 2;
+            } else {
+                y = ((buffer[7] - '0') * 10) + (buffer[8] - '0');
+                len = 3;
+            }
+
+            // Set stone (dependent on current player)
+            if (player == 'B')
+                stone = '#';
+            else
+                stone = 'o';
+
+            // Check coord != occupied
+            if (board[19 - y][x] != '.') {
+                printf("Occupied coordinate\n");
+                continue;
+            }
+                
+            board[19 - y][x] = stone;
+            
+            //Update history
+            int i;
+            for (i = 0; i < len; i++)
+                history[history_pointer + i] = buffer[i+6];
+
+            history_pointer += i;
+
+            //Check win condition
+            if (check_win_condition(board, x, 19-y)) {
+                if (player == 'B')
+                    printf("Black wins!\n");
+                else   
+                    printf("White wins!\n");
+
+                break;
+            }
+
+            //Update mist - returns 0-indexed coords 
+            mist_x = (5 * raise(x+1, 2) + 3 * (x+1) + 4) % 19;
+            mist_y = 19 - (1 + (4 * raise(y, 2) + 2 * y - 4) % 19);
+
+
+            // Switch player
+            if (player == 'B')
+                player = 'W';
+            else
+                player = 'B';
+            
+        } 
+        
+        else { // Command is completely unrecognised 
+            printf("Invalid!\n");
+        }
     
-    // term();
+    }
 
+    // Endgame !
+    printf("%s\n", history);
+    printf("Thank you for playing!\n");
     return 0;
-} 
+}
