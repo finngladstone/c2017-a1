@@ -13,6 +13,9 @@
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
 
+#define CHECK_SYNTAX "^place ([a-z]|[A-Z]|[0-9])+$"
+#define CHECK_VALIDITY "^place [A-S]([1-9]|1[0-9])$"
+
 /* Helper commands */
 
 int raise(int x, int power) {
@@ -147,11 +150,10 @@ int main()
             printf("\n");
         } 
         
-        // Preprocessing for place()
         else if (strncmp(buffer, "place ", 6) == 0) { 
-
+        
             // Will confirm command is within 'place [coord]' syntax and nothing else
-            regcomp(&check_syntax, "^place ([a-z]|[A-Z]|[0-9])+$", REG_EXTENDED);
+            regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
             
             if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
                 printf("Invalid!\n");
@@ -162,74 +164,75 @@ int main()
             regfree(&check_syntax); // See above about regfree
 
             // Will check that coordinate is valid!
-            regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9])$", REG_EXTENDED);
+            regcomp(&check_validity, CHECK_VALIDITY, REG_EXTENDED);
                 
-            if (regexec(&check_validity, buffer, 0, NULL, 0) == 0) {
-
-                regfree(&check_validity);
-                
-                int x; 
-                int y;
-                char stone;
-                int len;
-
-                // Obtain x: we know that the x coord is always at index 6
-                x = buffer[6] - 'A'; 
-            
-                // Check if we have a 1 or 2 digit y coord and account for such
-                if (strlen(buffer) == 8) {
-                    y = buffer[7] - '0'; 
-                    len = 2;
-                } else {
-                    y = ((buffer[7] - '0') * 10) + (buffer[8] - '0');
-                    len = 3;
-                }
-
-                // Set stone (dependent on current player)
-                if (player == 'B')
-                    stone = '#';
-                else
-                    stone = 'o';
-
-                // Check coord != occupied
-                if (board[19 - y][x] == '.') {
-                    board[19 - y][x] = stone;
-                    
-                    //Update history
-                    int i;
-                    for (i = 0; i < len; i++)
-                        history[history_pointer + i] = buffer[i+6];
-
-                    history_pointer += i;
-
-                    //Check win condition
-                    if (check_win_condition(board, x, 19-y)) {
-                        if (player == 'B')
-                            printf("Black wins!\n");
-                        else   
-                            printf("White wins!\n");
-
-                        break;
-                    }
-
-                    //Update mist - returns 0-indexed coords 
-                    mist_x = (5 * raise(x+1, 2) + 3 * (x+1) + 4) % 19;
-                    mist_y = 19 - (1 + (4 * raise(y, 2) + 2 * y - 4) % 19);
-
-
-                    // Switch player
-                    if (player == 'B')
-                        player = 'W';
-                    else
-                        player = 'B';
-                }
-                else 
-                    printf("Occupied coordinate\n");
-            } 
-            else { // Regex on validity fails
+            if (regexec(&check_validity, buffer, 0, NULL, 0) == 1) {
                 printf("Invalid coordinate\n");
                 regfree(&check_validity); // Already freed above if it succeeds
+                continue;
             }
+
+            regfree(&check_validity);
+                
+            int x; 
+            int y;
+            char stone;
+            int len;
+
+            // Obtain x: we know that the x coord is always at index 6
+            x = buffer[6] - 'A'; 
+        
+            // Check if we have a 1 or 2 digit y coord and account for such
+            if (strlen(buffer) == 8) {
+                y = buffer[7] - '0'; 
+                len = 2;
+            } else {
+                y = ((buffer[7] - '0') * 10) + (buffer[8] - '0');
+                len = 3;
+            }
+
+            // Set stone (dependent on current player)
+            if (player == 'B')
+                stone = '#';
+            else
+                stone = 'o';
+
+            // Check coord != occupied
+            if (board[19 - y][x] != '.') {
+                printf("Occupied coordinate\n");
+                continue;
+            }
+                
+            board[19 - y][x] = stone;
+            
+            //Update history
+            int i;
+            for (i = 0; i < len; i++)
+                history[history_pointer + i] = buffer[i+6];
+
+            history_pointer += i;
+
+            //Check win condition
+            if (check_win_condition(board, x, 19-y)) {
+                if (player == 'B')
+                    printf("Black wins!\n");
+                else   
+                    printf("White wins!\n");
+
+                break;
+            }
+
+            //Update mist - returns 0-indexed coords 
+            mist_x = (5 * raise(x+1, 2) + 3 * (x+1) + 4) % 19;
+            mist_y = 19 - (1 + (4 * raise(y, 2) + 2 * y - 4) % 19);
+
+
+            // Switch player
+            if (player == 'B')
+                player = 'W';
+            else
+                player = 'B';
+            
         } 
         
         else { // Command is completely unrecognised 
@@ -237,8 +240,8 @@ int main()
         }
     
     }
+
     // Endgame !
-    
     printf("%s\n", history);
     printf("Thank you for playing!\n");
     return 0;
