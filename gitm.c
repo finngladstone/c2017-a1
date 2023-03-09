@@ -2,13 +2,15 @@
 // unikey: fgla0414
 // SID: 510 448 570
 
+/* As per spec there is no support for abrupt EOF */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <regex.h>
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 256
 #define BOARD_SIZE 19
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
