@@ -2,8 +2,6 @@
 // unikey: fgla0414
 // SID: 510 448 570
 
-/* As per spec there is no support for abrupt EOF */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,6 +29,8 @@ int within_range(int a) {
 
     return 0;
 }
+
+/* Functions for checking win condition*/
 
 int check_next_position(char board[BOARD_SIZE][BOARD_SIZE], int x, int y, int xmod, int ymod) {
 
@@ -98,12 +98,10 @@ int main()
         }
     }
 
-    // Setup regex
+    // Setup regex for parsing place args later
+
     regex_t check_syntax;
     regex_t check_validity;
-
-    //https://regex101.com/r/rO0yE6/1
-
 
     char buffer[BUFFER_SIZE];
 
@@ -133,8 +131,10 @@ int main()
         }
         
         else if (strcmp(buffer, "view") == 0) {
-            printf("%c%i,", mist_x + 'A', 19 - mist_y);
+            // Output centre of mist coord in 1-indexed
+            printf("%c%i,", mist_x + 'A', 19 - mist_y); 
 
+            // Display concat string of positions in mist
             for (int i = mist_y - 3; i <= mist_y + 3; i++) {
                 for (int j = mist_x - 3; j <= mist_x + 3; j++) {
                     if (within_range(i) && within_range(j))
@@ -150,15 +150,18 @@ int main()
         // Preprocessing for place()
         else if (strncmp(buffer, "place ", 6) == 0) { 
 
+            // Will confirm command is within 'place [coord]' syntax and nothing else
             regcomp(&check_syntax, "^place ([a-z]|[A-Z]|[0-9])+$", REG_EXTENDED);
             
             if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
                 printf("Invalid!\n");
-                regfree(&check_syntax);
+                regfree(&check_syntax); // Will regfree asap in both outcomes
                 continue;
             }
 
-            regfree(&check_syntax);
+            regfree(&check_syntax); // See above about regfree
+
+            // Will check that coordinate is valid!
             regcomp(&check_validity, "^place [A-S]([1-9]|1[0-9])$", REG_EXTENDED);
                 
             if (regexec(&check_validity, buffer, 0, NULL, 0) == 0) {
@@ -170,8 +173,10 @@ int main()
                 char stone;
                 int len;
 
-                x = buffer[6] - 'A';
-
+                // Obtain x: we know that the x coord is always at index 6
+                x = buffer[6] - 'A'; 
+            
+                // Check if we have a 1 or 2 digit y coord and account for such
                 if (strlen(buffer) == 8) {
                     y = buffer[7] - '0'; 
                     len = 2;
@@ -180,14 +185,13 @@ int main()
                     len = 3;
                 }
 
+                // Set stone (dependent on current player)
                 if (player == 'B')
                     stone = '#';
                 else
                     stone = 'o';
 
-                // Flip input as x, y in 2d array addressed as arr[y][x]
-                // x/y coords preserved for history - remember to output as char/1-indexed int
-
+                // Check coord != occupied
                 if (board[19 - y][x] == '.') {
                     board[19 - y][x] = stone;
                     
@@ -208,7 +212,7 @@ int main()
                         break;
                     }
 
-                    // Update mist
+                    //Update mist - returns 0-indexed coords 
                     mist_x = (5 * raise(x+1, 2) + 3 * (x+1) + 4) % 19;
                     mist_y = 19 - (1 + (4 * raise(y, 2) + 2 * y - 4) % 19);
 
@@ -222,21 +226,20 @@ int main()
                 else 
                     printf("Occupied coordinate\n");
             } 
-            else {
+            else { // Regex on validity fails
                 printf("Invalid coordinate\n");
-                regfree(&check_validity);
+                regfree(&check_validity); // Already freed above if it succeeds
             }
-
-    
         } 
         
-        else {
+        else { // Command is completely unrecognised 
             printf("Invalid!\n");
         }
     
     }
-
-    puts(history);
-    puts("Thank you for playing!");
+    // Endgame !
+    
+    printf("%s\n", history);
+    printf("Thank you for playing!\n");
     return 0;
 }
