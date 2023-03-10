@@ -93,6 +93,8 @@ int main()
     int mist_x = 9;
     int mist_y = 9;
 
+    int number_of_plays = 0;
+
     //Setup the game board
     
     for (int i = 0; i < BOARD_SIZE; i++) {
@@ -204,6 +206,7 @@ int main()
             }
                 
             board[19 - y][x] = stone;
+            number_of_plays++;
             
             //Update history
             int i;
@@ -220,7 +223,11 @@ int main()
                     printf("White wins!\n");
 
                 break;
+            } else if (number_of_plays == 361) {
+                printf("Wow, a tie!\n");
+                break;
             }
+
 
             //Update mist - returns 0-indexed coords 
             mist_x = (5 * raise(x+1, 2) + 3 * (x+1) + 4) % 19;
