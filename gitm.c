@@ -13,7 +13,7 @@
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
 
-#define CHECK_SYNTAX "^place ([a-z]|[A-Z]|[0-9])+$"
+#define CHECK_SYNTAX "^place ([a-z]|[A-Z]|[0-9])+\n?$"
 #define CHECK_VALIDITY "^place [A-S]([1-9]|1[0-9])$"
 
 /* Helper commands */
@@ -155,36 +155,35 @@ int main()
         
         else if (strncmp(buffer, "place ", 6) == 0) { 
 
+            // Will confirm command is within 'place [coord]' syntax and nothing else
+            regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
+            int syntax_invalid = regexec(&check_syntax, buffer, 0, NULL, 0);
+            regfree(&check_syntax); // See above about regfree
+
             if (strchr(buffer, '\n') == NULL) {
-                // printf("Clause opened\n");
-                // int inval = 0;
+
                 int c;
-                int invalid_syntax = 0;
+                int failed_stdin_parse = 0;
+
                 while ((c = getchar()) != EOF && c != '\n') {
-                    if (c == ' ' && invalid_syntax == 0) {
-                        printf("Invalid!\n");
-                        invalid_syntax = 1;
-                    }       
+                    if ((c == ' ' && failed_stdin_parse == 0))
+                        failed_stdin_parse++;     
                 }
 
-                if (!invalid_syntax)
+                if (failed_stdin_parse || syntax_invalid)
+                    printf("Invalid!\n");
+                else 
                     printf("Invalid coordinate\n");
+                
+                continue;
+
+            } else if (syntax_invalid) {
+                printf("Invalid!\n");
                 continue;
             }
 
             //Clean newline for easier parsing
             buffer[strcspn(buffer, "\n")] = 0; 
-        
-            // Will confirm command is within 'place [coord]' syntax and nothing else
-            regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
-            
-            if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
-                printf("Invalid!\n");
-                regfree(&check_syntax); // Will regfree asap in both outcomes
-                continue;
-            }
-
-            regfree(&check_syntax); // See above about regfree
 
             // Will check that coordinate is valid!
             regcomp(&check_validity, CHECK_VALIDITY, REG_EXTENDED);
