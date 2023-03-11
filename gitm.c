@@ -115,20 +115,15 @@ int main()
     char buffer[BUFFER_SIZE];
 
     while(fgets(buffer, BUFFER_SIZE, stdin)) {
-
-        printf("buffer = %s\n", buffer);
         
-        //remove newline
-        buffer[strcspn(buffer, "\n")] = 0; 
-        
-        if (strcmp(buffer, "who") == 0) {
+        if (strcmp(buffer, "who\n") == 0) {
             printf("%c\n", player);
 
-        } else if (strcmp(buffer, "term") == 0) {
+        } else if (strcmp(buffer, "term\n") == 0) {
             exit(1);  
         } 
         
-        else if (strcmp(buffer, "resign") == 0) {
+        else if (strcmp(buffer, "resign\n") == 0) {
             if (player == 'B')
                 printf("White wins!\n");
             else
@@ -137,11 +132,11 @@ int main()
             break;
         } 
 
-        else if (strcmp(buffer, "history") == 0) {
+        else if (strcmp(buffer, "history\n") == 0) {
             printf("%s\n", history);
         }
         
-        else if (strcmp(buffer, "view") == 0) {
+        else if (strcmp(buffer, "view\n") == 0) {
             // Output centre of mist coord in 1-indexed
             printf("%c%i,", mist_x + 'A', 19 - mist_y); 
 
@@ -160,20 +155,25 @@ int main()
         
         else if (strncmp(buffer, "place ", 6) == 0) { 
 
-            // if (strchr(buffer, '\n') == NULL) {
-            //     int inval = 0;
-            //     int c;
-            //     while (((c = getchar()) != '\n') && c != EOF) {
-            //         if (c == ' ') {
-            //             printf("Invalid!\n");
-            //             inval = 1;
-            //         }       
-            //     }
+            if (strchr(buffer, '\n') == NULL) {
+                // printf("Clause opened\n");
+                // int inval = 0;
+                int c;
+                int invalid_syntax = 0;
+                while ((c = getchar()) != EOF && c != '\n') {
+                    if (c == ' ' && invalid_syntax == 0) {
+                        printf("Invalid!\n");
+                        invalid_syntax = 1;
+                    }       
+                }
 
-            //     if (!inval)
-            //         printf("Invalid coordinate\n");
-            //     continue;
-            // }
+                if (!invalid_syntax)
+                    printf("Invalid coordinate\n");
+                continue;
+            }
+
+            //Clean newline for easier parsing
+            buffer[strcspn(buffer, "\n")] = 0; 
         
             // Will confirm command is within 'place [coord]' syntax and nothing else
             regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
