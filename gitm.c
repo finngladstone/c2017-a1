@@ -115,6 +115,8 @@ int main()
     char buffer[BUFFER_SIZE];
 
     while(fgets(buffer, BUFFER_SIZE, stdin)) {
+
+        printf("buffer = %s\n", buffer);
         
         //remove newline
         buffer[strcspn(buffer, "\n")] = 0; 
@@ -158,20 +160,20 @@ int main()
         
         else if (strncmp(buffer, "place ", 6) == 0) { 
 
-            if (strchr(buffer, '\n') == NULL) {
-                int inval = 0;
-                int c;
-                while (((c = getchar()) != '\n')) {
-                    if (c == ' ') {
-                        printf("Invalid!\n");
-                        inval = 1;
-                    }       
-                }
+            // if (strchr(buffer, '\n') == NULL) {
+            //     int inval = 0;
+            //     int c;
+            //     while (((c = getchar()) != '\n') && c != EOF) {
+            //         if (c == ' ') {
+            //             printf("Invalid!\n");
+            //             inval = 1;
+            //         }       
+            //     }
 
-                if (!inval)
-                    printf("Invalid coordinate\n");
-                continue;
-            }
+            //     if (!inval)
+            //         printf("Invalid coordinate\n");
+            //     continue;
+            // }
         
             // Will confirm command is within 'place [coord]' syntax and nothing else
             regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
