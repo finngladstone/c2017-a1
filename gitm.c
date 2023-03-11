@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <regex.h>
 
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 2560
 #define BOARD_SIZE 19
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
@@ -35,7 +35,9 @@ int within_range(int a) {
 
 /* Functions for checking win condition*/
 
-int check_next_position(char board[BOARD_SIZE][BOARD_SIZE], int x, int y, int xmod, int ymod) {
+int check_next_position(char board[BOARD_SIZE][BOARD_SIZE],
+    int x, int y, int xmod, int ymod) 
+{
 
     if (!(within_range(x + xmod) && within_range(y + ymod)))
         return 0;
@@ -65,7 +67,9 @@ int check_win_condition(char board[BOARD_SIZE][BOARD_SIZE], int x, int y) {
                 continue;
             
             if (board[j][i] == ch) {
-                temp = 1 + check_next_position(board, x, y, x - i, y - j) + check_next_position(board, x, y, (x - i)*-1, (y - j)*-1);
+                temp = 1 + 
+                check_next_position(board, x, y, x - i, y - j) + 
+                check_next_position(board, x, y, (x - i)*-1, (y - j)*-1);
             }
 
             if (temp > count)
