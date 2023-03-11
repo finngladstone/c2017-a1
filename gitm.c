@@ -13,7 +13,7 @@
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
 
-#define CHECK_SYNTAX "^place ([a-z]|[A-Z]|[0-9])+\n?$"
+#define CHECK_SYNTAX "^place [^\n ]+\n?$"
 #define CHECK_VALIDITY "^place [A-S]([1-9]|1[0-9])$"
 
 /* Helper commands */
@@ -187,14 +187,13 @@ int main()
 
             // Will check that coordinate is valid!
             regcomp(&check_validity, CHECK_VALIDITY, REG_EXTENDED);
+            int invalid_coord = regexec(&check_validity, buffer, 0, NULL, 0);
+            regfree(&check_validity);
                 
-            if (regexec(&check_validity, buffer, 0, NULL, 0) == 1) {
+            if (invalid_coord) {
                 printf("Invalid coordinate\n");
-                regfree(&check_validity); // Already freed above if it succeeds
                 continue;
             }
-
-            regfree(&check_validity);
                 
             int x; 
             int y;
