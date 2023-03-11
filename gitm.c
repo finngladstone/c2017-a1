@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <regex.h>
 
-#define BUFFER_SIZE 2560
+#define BUFFER_SIZE 32
 #define BOARD_SIZE 19
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
@@ -157,6 +157,21 @@ int main()
         } 
         
         else if (strncmp(buffer, "place ", 6) == 0) { 
+
+            if (strchr(buffer, '\n') == NULL) {
+                int inval = 0;
+                int c;
+                while (((c = getchar()) != '\n')) {
+                    if (c == ' ') {
+                        printf("Invalid!\n");
+                        inval = 1;
+                    }       
+                }
+
+                if (!inval)
+                    printf("Invalid coordinate\n");
+                continue;
+            }
         
             // Will confirm command is within 'place [coord]' syntax and nothing else
             regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
