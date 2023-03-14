@@ -114,6 +114,9 @@ int main()
     regex_t check_validity;
 
     char buffer[BUFFER_SIZE];
+    
+    
+    /* Main program state loop */
 
     while(fgets(buffer, BUFFER_SIZE, stdin)) {
         
