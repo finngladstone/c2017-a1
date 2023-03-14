@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <regex.h>
 
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 11
 #define BOARD_SIZE 19
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
@@ -52,6 +52,7 @@ int check_next_position(char board[BOARD_SIZE][BOARD_SIZE],
 }
 
 int check_win_condition(char board[BOARD_SIZE][BOARD_SIZE], int x, int y) {
+
     int count = 0;
     char ch = board[y][x];
     int temp = 0;
@@ -263,6 +264,11 @@ int main()
         
         else { // Command is completely unrecognised 
             printf("Invalid!\n");
+
+            if (strchr(buffer, '\n') == NULL) { // Clear buffer
+                int c;
+                while ((c = getchar()) != EOF && c != '\n') {} 
+            }
         }
     
     }
