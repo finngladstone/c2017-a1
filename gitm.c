@@ -8,12 +8,12 @@
 #include <ctype.h>
 #include <regex.h>
 
-#define BUFFER_SIZE 2560
+#define BUFFER_SIZE 11
 #define BOARD_SIZE 19
 #define MAX_HISTORY 1084
 #define NO_PARAM_ARGS 5
 
-#define CHECK_SYNTAX "^place ([a-z]|[A-Z]|[0-9])+$"
+#define CHECK_SYNTAX "^place [^\n ]+\n?$"
 #define CHECK_VALIDITY "^place [A-S]([1-9]|1[0-9])$"
 
 /* Helper commands */
@@ -52,6 +52,7 @@ int check_next_position(char board[BOARD_SIZE][BOARD_SIZE],
 }
 
 int check_win_condition(char board[BOARD_SIZE][BOARD_SIZE], int x, int y) {
+
     int count = 0;
     char ch = board[y][x];
     int temp = 0;
@@ -116,17 +117,14 @@ int main()
 
     while(fgets(buffer, BUFFER_SIZE, stdin)) {
         
-        //remove newline
-        buffer[strcspn(buffer, "\n")] = 0; 
-        
-        if (strcmp(buffer, "who") == 0) {
+        if (strcmp(buffer, "who\n") == 0) {
             printf("%c\n", player);
 
-        } else if (strcmp(buffer, "term") == 0) {
+        } else if (strcmp(buffer, "term\n") == 0) {
             exit(1);  
         } 
         
-        else if (strcmp(buffer, "resign") == 0) {
+        else if (strcmp(buffer, "resign\n") == 0) {
             if (player == 'B')
                 printf("White wins!\n");
             else
@@ -135,11 +133,11 @@ int main()
             break;
         } 
 
-        else if (strcmp(buffer, "history") == 0) {
+        else if (strcmp(buffer, "history\n") == 0) {
             printf("%s\n", history);
         }
         
-        else if (strcmp(buffer, "view") == 0) {
+        else if (strcmp(buffer, "view\n") == 0) {
             // Output centre of mist coord in 1-indexed
             printf("%c%i,", mist_x + 'A', 19 - mist_y); 
 
@@ -157,28 +155,46 @@ int main()
         } 
         
         else if (strncmp(buffer, "place ", 6) == 0) { 
-        
+
             // Will confirm command is within 'place [coord]' syntax and nothing else
             regcomp(&check_syntax, CHECK_SYNTAX, REG_EXTENDED);
-            
-            if (regexec(&check_syntax, buffer, 0, NULL, 0) == 1) {
+            int syntax_invalid = regexec(&check_syntax, buffer, 0, NULL, 0);
+            regfree(&check_syntax); // See above about regfree
+
+            if (strchr(buffer, '\n') == NULL) {
+
+                int c;
+                int failed_stdin_parse = 0;
+
+                while ((c = getchar()) != EOF && c != '\n') {
+                    if ((c == ' ' && failed_stdin_parse == 0))
+                        failed_stdin_parse++;     
+                }
+
+                if (failed_stdin_parse || syntax_invalid)
+                    printf("Invalid!\n");
+                else 
+                    printf("Invalid coordinate\n");
+                
+                continue;
+
+            } else if (syntax_invalid) {
                 printf("Invalid!\n");
-                regfree(&check_syntax); // Will regfree asap in both outcomes
                 continue;
             }
 
-            regfree(&check_syntax); // See above about regfree
+            //Clean newline for easier parsing
+            buffer[strcspn(buffer, "\n")] = 0; 
 
             // Will check that coordinate is valid!
             regcomp(&check_validity, CHECK_VALIDITY, REG_EXTENDED);
+            int invalid_coord = regexec(&check_validity, buffer, 0, NULL, 0);
+            regfree(&check_validity);
                 
-            if (regexec(&check_validity, buffer, 0, NULL, 0) == 1) {
+            if (invalid_coord) {
                 printf("Invalid coordinate\n");
-                regfree(&check_validity); // Already freed above if it succeeds
                 continue;
             }
-
-            regfree(&check_validity);
                 
             int x; 
             int y;
@@ -248,6 +264,11 @@ int main()
         
         else { // Command is completely unrecognised 
             printf("Invalid!\n");
+
+            if (strchr(buffer, '\n') == NULL) { // Clear buffer
+                int c;
+                while ((c = getchar()) != EOF && c != '\n') {} 
+            }
         }
     
     }
